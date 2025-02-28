@@ -1,0 +1,26 @@
+# Python Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual Environment
+venv/
+env/
+*.env
+
+# Jupyter Notebooks checkpoints
+.ipynb_checkpoints/
+
+# Docker files
+*.log
+docker-compose.override.yml
+*.docker
+
+# VS Code specific files
+.vscode/
+
+# PostgreSQL
+pg_data/
+
+# Container-specific files
+.devcontainer/
