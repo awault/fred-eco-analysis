@@ -1,7 +1,12 @@
 # main.py
-
+import sys
 import os
 import pandas as pd
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+
+from downloader import get_fred_data
+from utilities import get_key
 
 # ANSI formatting codes
 GREEN = '\033[32m'
@@ -19,13 +24,29 @@ def main():
     
     if choice == "1":
         tags = input(f"\nList FRED data tags separated by commas: ").strip().upper().split(",")
-        print(tags)
-
+    
     elif choice == "2":
         print(f"\nExiting Program... Good bye!")
 
     all_data = pd.DataFrame()
+    invalid_tags = []
+
+    # Get API Key
+    fred_api_key = get_key()
+
+    # Get FRED Data
+    df = get_fred_data(fred_api_key,tags)
     
+
+
+    
+
+
+
+    # for tag in tags:
+        #print(f"\nFetching data for {tag}...")
+
+
 
 
 
