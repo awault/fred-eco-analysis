@@ -11,7 +11,7 @@ load_dotenv(dotenv_path=env_path)
 def get_key():
     fred_api_key = os.getenv('FRED_API_KEY')
     if not fred_api_key:
-        print("API key is unavailable!")
+        print(f"\nAPI key is unavailable!")
     else:
-        print("API key loaded successfully!")
+        print(f"\nAPI key loaded successfully!")
     return fred_api_key
