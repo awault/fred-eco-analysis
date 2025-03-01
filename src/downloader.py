@@ -42,17 +42,33 @@ def get_metadata(series_id, api_key):
 
 
 def fetch_fred_series(series_id,api_key,start_date=None,end_date=None):
+    """
+    Fetches time series data from the FRED API and returns it as a pandas DataFrame.
+    
+    Parameters:
+    series_id (str): The ID of the FRED series to fetch.
+    api_key (str): API key for authenticating with the FRED API.
+    start_date (str, optional): Start date for the data retrieval in 'YYYY-MM-DD' format.
+    end_date (str, optional): End date for the data retrieval in 'YYYY-MM-DD' format.
+    
+    Returns:
+    pd.DataFrame or None: A DataFrame containing the time series data if successful, otherwise None.
+    """
+    # Construct the base API URL with required parameters
     url = f'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&\
         api_key={api_key}&file_type=json'
     
+    # Append optional start and end dates to the URL if provided
     if start_date:
         url += f'&observation_start={start_date}'
 
     if end_date:
         url += f'&observation_end={end_date}'
 
+    # Make the GET request to the FRED API
     response = requests.get(url)
 
+    # Check if the response status is not 200 (OK)
     if response.status_code != 200:
         print(f"Error fetching data. HTTP Status Code: {response.status_code}")
         return None
@@ -61,7 +77,7 @@ def fetch_fred_series(series_id,api_key,start_date=None,end_date=None):
         # Try to load the response JSON
         data = response.json()
 
-        # Check if observations key exists and is not empty
+        # Check if observations key exists and contains data, if not return None
         if "observations" not in data or not data["observations"]:
             print(f"No observations found for the series: {series_id}")
             return None
@@ -72,35 +88,6 @@ def fetch_fred_series(series_id,api_key,start_date=None,end_date=None):
             return df
         
     except ValueError as e:
+        # Handle JSON parsing errors
         print(f"Error parsing the response JSON for series: {series_id}. Error: {str(e)}")
-        return None
-
-
-
-    
-
-
-def get_fred_data(fred_api_key,series_id, start_date=None, end_date=None):
-    """
-    Fetches time series data from FRED using tags or series id.
-
-    Parameters:
-        series_id (str): FRED series id or tag (e.g. 'GDP','PERMIT')
-        start_date (str, optional): Start date in 'YYYY-MM-DD' format.
-        end_date (str, optional): End date in 'YYYY-MM-DD' format.
-
-    Returns:
-        pd.DataFrame: A DataFrame with the date as index and values as the series data.
-    """
-    
-    fred = Fred(api_key=str(fred_api_key))
-    
-    try:
-        data = fred.get_series(series_id,start_date,end_date)
-        df = pd.DataFrame(data, columns=['Value'])
-        df.index.name = 'Date'
-        return df
-
-    except Exception as e:
-        print(f"Error fetching data: {e}")
         return None
