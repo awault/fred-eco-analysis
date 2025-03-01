@@ -73,10 +73,36 @@ def main():
         except Exception as e:
             print(f"Error fetching records for {tag}: {str(e)}")
 
-        print(f"\nInvalid tags: {invalid_tags}\n")
-        print(metadata_df.info())
-        print("\n")
-        print(time_series_df.tail())
+    print(f"\nInvalid tags: {invalid_tags}\n")
+    print(metadata_df.info())
+    print("\n")
+    print(time_series_df.info())
+
+# Format the Data
+    try:
+
+        # Define columns to drop
+        drop_meta_cols = ['realtime_start','realtime_end','last_updated']
+        drop_series_cols = ['realtime_start','realtime_end']
+
+        # Check if dropped columns are valid
+        valid_meta_drops = all(col in metadata_df.columns for col in drop_meta_cols)
+        valid_series_drops = all(col in time_series_df.columns for col in drop_series_cols)
+
+        # Drop colums or raise an error
+        if valid_meta_drops and valid_series_drops:
+            cleaning_metadata = metadata_df.drop(columns=drop_meta_cols)
+            cleaning_time_series = time_series_df.drop(columns=drop_series_cols)
+        else:
+            raise KeyError("Attempt to drop columns was unsuccessful, please review column names in the DataFrames.")
+
+    except Exception as e:
+
+        print(f"Unexpected Error: {e}")
+    
+    print(cleaning_metadata.info())
+    print(f"\n{cleaning_time_series.info()}")
+
 
 
 if __name__ == "__main__":
