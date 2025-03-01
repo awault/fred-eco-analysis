@@ -41,6 +41,44 @@ def get_metadata(series_id, api_key):
 
 
 
+def fetch_fred_series(series_id,api_key,start_date=None,end_date=None):
+    url = f'https://api.stlouisfed.org/fred/series/observations?series_id={series_id}&\
+        api_key={api_key}&file_type=json'
+    
+    if start_date:
+        url += f'&observation_start={start_date}'
+
+    if end_date:
+        url += f'&observation_end={end_date}'
+
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        print(f"Error fetching data. HTTP Status Code: {response.status_code}")
+        return None
+    
+    try:
+        # Try to load the response JSON
+        data = response.json()
+
+        # Check if observations key exists and is not empty
+        if "observations" not in data or not data["observations"]:
+            print(f"No observations found for the series: {series_id}")
+            return None
+        
+        else: # Convert the observations into a DataFrame
+            df = pd.DataFrame(data['observations'])
+            df["id"] = series_id
+            return df
+        
+    except ValueError as e:
+        print(f"Error parsing the response JSON for series: {series_id}. Error: {str(e)}")
+        return None
+
+
+
+    
+
 
 def get_fred_data(fred_api_key,series_id, start_date=None, end_date=None):
     """
