@@ -7,8 +7,8 @@ import psycopg2
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from utilities import get_key
-from downloader import get_metadata
-from downloader import fetch_fred_series
+from downloader import get_metadata, fetch_fred_series
+from storage import create_table
 from sqlalchemy import create_engine, text
 
 # ANSI formatting codes
@@ -155,14 +155,38 @@ def main():
     # Close connection to the default_database
     engine.dispose()
 
+    # Define tables required for fred_data
+    metadata_table_definition = """
+        id VARCHAR(10),
+        title TEXT,
+        observation_start DATE,
+        observation_end DATE,
+        frequency VARCHAR(20),
+        frequency_short VARCHAR (5),
+        units TEXT,
+        units_short TEXT,
+        seasonal_adjustment TEXT,
+        seasonal_adjustment_short TEXT,
+        popularity INTEGER,
+        notes TEXT
+        """
+
     # Reconnect to fred_data
     engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}')
 
     try:
         with engine.connect() as connection:
             print(f"\nConnected to '{database}' successfully!")
-            result = connection.execute(text("SELECT current_database();"))
-            print(f"\nCurrent database: {result.fetchone()[0]}")
+            # result = connection.execute(text("SELECT current_database();"))
+            # print(f"\nCurrent database: {result.fetchone()[0]}")
+
+            # Create the table for metadata 
+            create_table(connection, 'metadata', metadata_table_definition)
+            print("Meta table created")
+
+            
+
+            # Import the data with the correct table structure/column names
 
     except Exception as e:
         print(f"\nError connecting to '{database}':", e)
