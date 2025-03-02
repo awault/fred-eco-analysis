@@ -127,7 +127,8 @@ def main():
     database = 'fred_data'
 
     # Create SQLAlchemy engine
-    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{default_database}')
+    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{default_database}', isolation_level="AUTOCOMMIT")
+    print(f"\nTesting connection to PostgreSQL database...")
 
     # Test the connection
     try:
@@ -135,10 +136,37 @@ def main():
             print(f"\nConnection successful!")
             result = connection.execute(text("SELECT version();"))
             print(f"\nPostgreSQL version:", result.fetchone())
+
+            # Check if fred_data exists
+            check_fred = connection.execute(text(f"SELECT 1 FROM pg_database WHERE datname = '{database}'"))
+            
+            # If not, CREATE  it
+            if not check_fred.scalar():             
+                connection.execute(text(f'CREATE DATABASE {database}'))
+                print(f"\nDatabase '{database}' created.")
+
+            # Otherwise, verify it already exists    
+            else: 
+                print(f"\nDatabase '{database}' already exists.")
     
     except Exception as e:
         print(f"\nError connecting to the database:", e)
-        return None
+    
+    # Close connection to the default_database
+    engine.dispose()
+
+    # Reconnect to fred_data
+    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}')
+
+    try:
+        with engine.connect() as connection:
+            print(f"\nConnected to '{database}' successfully!")
+            result = connection.execute(text("SELECT current_database();"))
+            print(f"\nCurrent database: {result.fetchone()[0]}")
+
+    except Exception as e:
+        print(f"\nError connecting to '{database}':", e)
+        
 
 if __name__ == "__main__":
     main()
