@@ -157,7 +157,7 @@ def main():
 
     # Define tables required for fred_data
     metadata_table_definition = """
-        id VARCHAR(10),
+        id VARCHAR(10) PRIMARY KEY,
         title TEXT,
         observation_start DATE,
         observation_end DATE,
@@ -169,6 +169,14 @@ def main():
         seasonal_adjustment_short TEXT,
         popularity INTEGER,
         notes TEXT
+        """
+
+    time_series_table_definition = """
+        date DATE,
+        value NUMERIC,
+        id VARCHAR(10),
+        PRIMARY KEY (id, date),
+        FOREIGN KEY(id) REFERENCES metadata(id)
         """
 
     # Reconnect to fred_data
@@ -184,9 +192,16 @@ def main():
             create_table(connection, 'metadata', metadata_table_definition)
             print("Meta table created")
 
-            
-
+            # Create the table for time_series
+            create_table(connection, 'time_series', time_series_table_definition)
+            print("Time Series table created")
             # Import the data with the correct table structure/column names
+
+            # Commit changes
+            connection.commit()
+
+            # Close the connection
+            connection.close()
 
     except Exception as e:
         print(f"\nError connecting to '{database}':", e)
