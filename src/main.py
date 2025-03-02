@@ -2,12 +2,14 @@
 import sys
 import os
 import pandas as pd
+import psycopg2
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from utilities import get_key
 from downloader import get_metadata
 from downloader import fetch_fred_series
+from sqlalchemy import create_engine, text
 
 # ANSI formatting codes
 GREEN = '\033[32m'
@@ -87,7 +89,7 @@ def main():
         drop_meta_cols = ['realtime_start','realtime_end','last_updated']
         drop_series_cols = ['realtime_start','realtime_end']
 
-        # Check if dropped columns are valid
+        # Check if dropped columns are valid (returns true if valid)
         valid_meta_drops = all(col in metadata_df.columns for col in drop_meta_cols)
         valid_series_drops = all(col in time_series_df.columns for col in drop_series_cols)
 
@@ -105,11 +107,37 @@ def main():
     # Add source column as FRED in Metadata
     cleaning_metadata['source'] = 'FRED'
 
+
+    # Review Results
     print(cleaning_metadata.info())
     print(f"\n{cleaning_time_series.info()}")
 
     print(cleaning_metadata[['id','title','source']])
+    print('\n')
+    print(cleaning_time_series)
 
+    # Connect to Database and Upload Data
+
+    # Connection Parameters
+    host = 'db'
+    port = '5432'
+    user = 'postgres'
+    password = 'postgres'
+    default_database = 'postgres'
+    database = 'fred_data'
+
+    # Create SQLAlchemy engine
+    engine = create_engine(f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{default_database}')
+
+    # Test the connection
+    try:
+        with engine.connect() as connection:
+            print("Connection successful!")
+            result = connection.execute(text("SELECT version();"))
+            print("PostgreSQL version:", result.fetchone())
+    
+    except Exception as e:
+        print("Error connecting to the database:", e)
 
 if __name__ == "__main__":
     main()
