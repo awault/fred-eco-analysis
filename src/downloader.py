@@ -91,3 +91,4 @@ def fetch_fred_series(series_id,api_key,start_date=None,end_date=None):
         # Handle JSON parsing errors
         print(f"Error parsing the response JSON for series: {series_id}. Error: {str(e)}")
         return None
+
