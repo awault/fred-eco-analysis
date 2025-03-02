@@ -132,12 +132,13 @@ def main():
     # Test the connection
     try:
         with engine.connect() as connection:
-            print("Connection successful!")
+            print(f"\nConnection successful!")
             result = connection.execute(text("SELECT version();"))
-            print("PostgreSQL version:", result.fetchone())
+            print(f"\nPostgreSQL version:", result.fetchone())
     
     except Exception as e:
-        print("Error connecting to the database:", e)
+        print(f"\nError connecting to the database:", e)
+        return None
 
 if __name__ == "__main__":
     main()
