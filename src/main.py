@@ -2,7 +2,6 @@
 import sys
 import os
 import pandas as pd
-import psycopg2
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
@@ -26,7 +25,8 @@ def main():
     choice = input(f"\nEnter your selection: ").strip()
     
     if choice == "1":
-        tags = input(f"\nList the tags for FRED data series, separated by commas: ").strip().upper().split(",")
+        tags = input(f"\nList the tags for FRED data series, separated by commas: ").upper().split(",")
+        tags = [tag.strip() for tag in tags] # Remove leading/trailing spaces from each tag
     
     elif choice == "2":
         print(f"\nExiting Program... Good bye!")
@@ -78,9 +78,9 @@ def main():
             invalid_tags.append(tag)
 
     print(f"\nInvalid tags: {invalid_tags}\n")
-    print(metadata_df.info())
-    print("\n")
-    print(time_series_df.info())
+    # print(metadata_df.info())
+    # print("\n")
+    # print(time_series_df.info())
 
 # Format the Data
     try:
@@ -107,17 +107,18 @@ def main():
     # Add source column as FRED in Metadata
     cleaning_metadata['source'] = 'FRED'
 
-
     # Review Results
-    print(cleaning_metadata.info())
-    print(f"\n{cleaning_time_series.info()}")
+    # print(cleaning_metadata.info())
+    # print(f"\n{cleaning_time_series.info()}")
 
-    print(cleaning_metadata[['id','title','source']])
-    print('\n')
-    print(cleaning_time_series)
+    # print(cleaning_metadata[['id','title','source']])
+    # print('\n')
+    # print(cleaning_time_series)
+
+    clean_metadata = cleaning_metadata
+    clean_time_series = cleaning_time_series
 
     # Connect to Database and Upload Data
-
     # Connection Parameters
     host = 'db'
     port = '5432'
@@ -168,7 +169,8 @@ def main():
         seasonal_adjustment TEXT,
         seasonal_adjustment_short TEXT,
         popularity INTEGER,
-        notes TEXT
+        notes TEXT,
+        source TEXT
         """
 
     time_series_table_definition = """
@@ -190,22 +192,33 @@ def main():
 
             # Create the table for metadata 
             create_table(connection, 'metadata', metadata_table_definition)
-            print("Meta table created")
+            print(f"\nMeta table created")
 
             # Create the table for time_series
             create_table(connection, 'time_series', time_series_table_definition)
-            print("Time Series table created")
-            # Import the data with the correct table structure/column names
-
-            # Commit changes
-            connection.commit()
-
-            # Close the connection
-            connection.close()
+            print(f"\nTime Series table created")
 
     except Exception as e:
         print(f"\nError connecting to '{database}':", e)
         
+    # Import the fred data to sql database
+    try:
+        clean_metadata.to_sql('metadata', engine, if_exists='append', index=False)
+        print(f"{GREEN}Metadata inserted successfully!{RESET}")
 
+    except Exception as e:
+        print(f"{RED}Error inserting metadata: {str(e)}{RESET}")
+
+    try:
+        clean_time_series.to_sql('time_series', engine, if_exists='append', index=False)
+        print(f"{GREEN}Time series data inserted successfully!{RESET}")
+
+    except Exception as e:
+        print(f"{RED}Error inserting time series data: {str(e)}{RESET}")
+
+    connection.commit()
+    connection.close()
+
+    
 if __name__ == "__main__":
     main()
