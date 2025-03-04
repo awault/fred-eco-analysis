@@ -109,11 +109,11 @@ def main():
 
     # Review Results
     # print(cleaning_metadata.info())
-    # print(f"\n{cleaning_time_series.info()}")
+    print(f"\n{cleaning_time_series.info()}")
 
     # print(cleaning_metadata[['id','title','source']])
     # print('\n')
-    # print(cleaning_time_series)
+    print(cleaning_time_series)
 
     clean_metadata = cleaning_metadata
     clean_time_series = cleaning_time_series
