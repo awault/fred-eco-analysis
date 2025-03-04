@@ -20,7 +20,8 @@ def main():
     print(f"\n{BOLD}---- FRED DATA ACCESS ----{RESET}\n")
     print(f"Select an option:\n")
     print(f"1) Fetch a list of economic data series from FRED.")
-    print(f"2) Exit Program")
+    print(f"2) Load the economic data series from FRED with the tags.txt file.")
+    print(f"3) Exit Program")
 
     choice = input(f"\nEnter your selection: ").strip()
     
@@ -29,6 +30,21 @@ def main():
         tags = [tag.strip() for tag in tags] # Remove leading/trailing spaces from each tag
     
     elif choice == "2":
+        try: 
+            with open("tags.txt","r") as file:
+                tags = [line.strip().upper() for line in file.readlines() if line.strip()]
+            
+            if not tags:
+                print(f"\n{RED}Error: tags.txt is empty!{RESET}")
+
+            else:
+                print(f"\nLoading FRED data series for tags: {tags}")
+        
+        except FileNotFoundError:
+            print(f"\n{RED}Error: tags.txt file not found!{RESET}")
+
+
+    elif choice == "3":
         print(f"\nExiting Program... Good bye!")
         return None
 
