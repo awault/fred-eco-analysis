@@ -123,16 +123,22 @@ def main():
     # Add source column as FRED in Metadata
     cleaning_metadata['source'] = 'FRED'
 
-    # Review Results
-    # print(cleaning_metadata.info())
-    print(f"\n{cleaning_time_series.info()}")
-
-    # print(cleaning_metadata[['id','title','source']])
-    # print('\n')
-    print(cleaning_time_series)
-
     clean_metadata = cleaning_metadata
     clean_time_series = cleaning_time_series
+
+    # Review DataFrames
+    print("Metadata")
+    for column in clean_metadata.columns:
+        print(f'{column}: {clean_metadata[column].iloc[0]}')
+    print('\n')
+    print(clean_metadata.info())
+    print('\n')
+    print("Time Series")
+    for column in clean_time_series.columns:
+        print(f'{column}: {clean_time_series[column].iloc[0]}')
+    print('\n')   
+    print(clean_time_series.info())
+    print('\n')
 
     # Connect to Database and Upload Data
     # Connection Parameters
