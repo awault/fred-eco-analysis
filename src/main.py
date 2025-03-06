@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src'
 from utilities import get_key
 from downloader import get_metadata, fetch_fred_series
 from storage import create_table
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, types
 
 # ANSI formatting codes
 GREEN = '\033[32m'
@@ -20,7 +20,8 @@ def main():
     print(f"\n{BOLD}---- FRED DATA ACCESS ----{RESET}\n")
     print(f"Select an option:\n")
     print(f"1) Fetch a list of economic data series from FRED.")
-    print(f"2) Exit Program")
+    print(f"2) Load the economic data series from FRED with the tags.txt file.")
+    print(f"3) Exit Program")
 
     choice = input(f"\nEnter your selection: ").strip()
     
@@ -29,6 +30,21 @@ def main():
         tags = [tag.strip() for tag in tags] # Remove leading/trailing spaces from each tag
     
     elif choice == "2":
+        try: 
+            with open("tags.txt","r") as file:
+                tags = [line.strip().upper() for line in file.readlines() if line.strip()]
+            
+            if not tags:
+                print(f"\n{RED}Error: tags.txt is empty!{RESET}")
+
+            else:
+                print(f"\nLoading FRED data series for tags: {tags}")
+        
+        except FileNotFoundError:
+            print(f"\n{RED}Error: tags.txt file not found!{RESET}")
+
+
+    elif choice == "3":
         print(f"\nExiting Program... Good bye!")
         return None
 
@@ -107,16 +123,33 @@ def main():
     # Add source column as FRED in Metadata
     cleaning_metadata['source'] = 'FRED'
 
-    # Review Results
-    # print(cleaning_metadata.info())
-    # print(f"\n{cleaning_time_series.info()}")
+    # Convert data types to dates and numbers
+    cleaning_metadata['observation_start'] = pd.to_datetime(cleaning_metadata['observation_start'])
+    cleaning_metadata['observation_end'] = pd.to_datetime(cleaning_metadata['observation_end'])
+    cleaning_metadata['popularity'] = cleaning_metadata['popularity'].astype(int)
 
-    # print(cleaning_metadata[['id','title','source']])
-    # print('\n')
-    # print(cleaning_time_series)
+    cleaning_time_series['date'] = pd.to_datetime(cleaning_time_series['date'])
+    cleaning_time_series['value'] = pd.to_numeric(cleaning_time_series['value'])
+
+    cleaning_time_series = cleaning_time_series.rename(columns={'value':'obs'})
+
 
     clean_metadata = cleaning_metadata
     clean_time_series = cleaning_time_series
+
+    # Review DataFrames
+    print("Metadata")
+    for column in clean_metadata.columns:
+        print(f'{column}: {clean_metadata[column].iloc[0]}')
+    print('\n')
+    print(clean_metadata.info())
+    print('\n')
+    print("Time Series")
+    for column in clean_time_series.columns:
+        print(f'{column}: {clean_time_series[column].iloc[0]}')
+    print('\n')   
+    print(clean_time_series.info())
+    print('\n')
 
     # Connect to Database and Upload Data
     # Connection Parameters
@@ -158,7 +191,7 @@ def main():
 
     # Define tables required for fred_data
     metadata_table_definition = """
-        id VARCHAR(10) PRIMARY KEY,
+        id VARCHAR(20) PRIMARY KEY,
         title TEXT,
         observation_start DATE,
         observation_end DATE,
@@ -175,8 +208,8 @@ def main():
 
     time_series_table_definition = """
         date DATE,
-        value NUMERIC,
-        id VARCHAR(10),
+        obs NUMERIC,
+        id VARCHAR(20),
         PRIMARY KEY (id, date),
         FOREIGN KEY(id) REFERENCES metadata(id)
         """
@@ -203,14 +236,34 @@ def main():
         
     # Import the fred data to sql database
     try:
-        clean_metadata.to_sql('metadata', engine, if_exists='append', index=False)
+        clean_metadata.to_sql('metadata', engine, if_exists='append', index=False,
+                              dtype={
+                                  'id': types.VARCHAR(20),
+                                  'title': types.TEXT,
+                                  'observation_start': types.DATE,
+                                  'observation_end': types.DATE,
+                                  'frequency': types.VARCHAR(20),
+                                  'frequency_short': types.VARCHAR(5),
+                                  'units': types.TEXT,
+                                  'units_short': types.TEXT,
+                                  'seasonal_adjustment': types.TEXT,
+                                  'seasonal_adjustment_short': types.TEXT,
+                                  'popularity': types.INTEGER,
+                                  'notes': types.TEXT,
+                                  'source': types.TEXT
+                              })
         print(f"{GREEN}Metadata inserted successfully!{RESET}")
 
     except Exception as e:
         print(f"{RED}Error inserting metadata: {str(e)}{RESET}")
 
     try:
-        clean_time_series.to_sql('time_series', engine, if_exists='append', index=False)
+        clean_time_series.to_sql('time_series', engine, if_exists='append', index=False,
+                                 dtype={
+                                    'date': types.DATE,
+                                    'obs': types.NUMERIC,
+                                    'id': types.VARCHAR(20)       
+                                 })
         print(f"{GREEN}Time series data inserted successfully!{RESET}")
 
     except Exception as e:
