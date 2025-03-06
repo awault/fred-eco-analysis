@@ -191,7 +191,7 @@ def main():
 
     # Define tables required for fred_data
     metadata_table_definition = """
-        id VARCHAR(10) PRIMARY KEY,
+        id VARCHAR(20) PRIMARY KEY,
         title TEXT,
         observation_start DATE,
         observation_end DATE,
@@ -209,7 +209,7 @@ def main():
     time_series_table_definition = """
         date DATE,
         obs NUMERIC,
-        id VARCHAR(10),
+        id VARCHAR(20),
         PRIMARY KEY (id, date),
         FOREIGN KEY(id) REFERENCES metadata(id)
         """
